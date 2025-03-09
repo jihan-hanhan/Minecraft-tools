@@ -5,7 +5,7 @@ from tkinter import filedialog
 from datetime import datetime
 from tkinter import END
 from tkinter import messagebox
-#import translators as ts
+import translators as ts
 
 class Trans():
     def __init__(self,mes):
@@ -27,12 +27,12 @@ class Trans():
         self.mes.text.configure(state='disabled')
 
     def rmcache(self):
-        if os.path.exists("./cache"):
-            shutil.rmtree("./cache")
-        os.mkdir("./cache")
+        if os.path.exists("./cache/trans"):
+            shutil.rmtree("./cache/trans")
+        os.mkdir("./cache/trans")
         self.cutin("旧的缓存已清空\n")
     
-    def getpath(self):
+    def joincache(self):
         self.filepath.append(filedialog.askopenfilename(title="选择文件",filetypes=[("jar文件","*.jar"),("json文件","*.json")]))
         if not self.filepath[-1]=="":
             self.cutin(f"新的文件{os.path.basename(self.filepath[-1])}加入队列\n")
@@ -41,8 +41,9 @@ class Trans():
                 back = "_jar"
             elif file_e == ".json":
                 back = "_jn"
-            path_s = (f"./cache/"+os.path.basename(self.filepath[-1])+back)
+            path_s = (f"./cache/trans/"+os.path.basename(self.filepath[-1])+back)
             path_s = os.path.join(path_s)
+            
             
             if back == "_jar":
                 with zf.ZipFile(self.filepath[-1],"r") as z:
@@ -80,8 +81,17 @@ class Trans():
 
         return sub_dicts
     
-    def trans_ts(self,dec):
-        pass
+    def trans_ts(self,dic,forml,tol,trantor):
+        traned_dic = dic
+        for i1,i2 in dic.items():
+            pass
+    
+    def trans_ts_retdic(self,text_L,fromlang,tolang,trantor):
+        traned_dic = {}
+        for dic in text_L:
+            pass
+
+
 
     
     

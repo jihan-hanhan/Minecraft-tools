@@ -6,7 +6,7 @@ from ttkbootstrap.scrolled import ScrolledText
 from tkinter import filedialog
 from tkinter import Listbox
 from tkinter import Entry
-
+from threading import Thread
 
 from Translatorcode import Trans
 
@@ -91,7 +91,7 @@ text.pack(side=TOP,anchor="w")
 fileframe = ttk.Frame(tools,)
 fileframe.pack(side=TOP,pady=10,anchor='w')
 
-input_buttun = ttk.Button(fileframe,bootstyle="info-outline",width=7,text="选择文件",command=lambda:mian_code.getpath())
+input_buttun = ttk.Button(fileframe,bootstyle="info-outline",width=7,text="选择文件",command=lambda:joincache_tr.start())
 input_buttun.pack(side=LEFT,padx=2)
 
 del_buttun = ttk.Button(fileframe,bootstyle="danger-outline",width=7,text="删除文件",command=lambda:mian_code.delfile())
@@ -111,7 +111,7 @@ def setting():
 
     text = ttk.Label(window_set,text="使用翻译库:")
     text.pack(side="top",anchor="w",padx=5)
-    combobox_ta = ttk.Combobox(window_set,values=["translators(联网)","argostranslate(本地模型)"],state="readonly",bootstyle="danger")
+    combobox_ta = ttk.Combobox(window_set,values=["translators(联网)","argostranslate(本地模型)"],state="readonly")
     combobox_ta.current(0)
     combobox_ta.pack(side=TOP,anchor="w",padx=5)
 
@@ -120,6 +120,11 @@ def setting():
     text.pack(side="top",anchor="w",padx=5)
     trframe = ttk.Frame(window_set)
     trframe.pack(side="top",anchor="w",padx=10)
+
+    ###
+    text = ttk.Label(trframe,text="md给我气傻了暂时不写")
+    text.pack(side="top",anchor="w",padx=5)
+    ###
 
     text = ttk.Label(trframe,text="翻译引擎")
     text.pack(side="top",anchor="w",padx=5)
@@ -151,6 +156,14 @@ def setting():
     text = ttk.Label(trframe,text="*注意,请使用\"-\"而不是\"_\"",foreground="gray")
     text.pack(side="top",anchor="w",padx=5)
 
+    #argostranslate
+    text = ttk.Label(window_set,text="argostranslate库相关:")
+    text.pack(side="top",anchor="w",padx=5)
+    argframe = ttk.Frame(window_set)
+    argframe.pack(side="top",anchor="w",padx=5)
+
+    
+
 
 setbuttun = ttk.Button(tools,bootstyle="info-outline",width=7,text="设置",command=setting)
 setbuttun.pack(side=TOP,pady=10,anchor='w')
@@ -161,4 +174,5 @@ setbuttun.pack(side=TOP,pady=10,anchor='w')
 
 #函数/主程序
 mian_code = Trans(mes=logs_text)
+joincache_tr = Thread(target=mian_code.joincache)
 root.mainloop()
