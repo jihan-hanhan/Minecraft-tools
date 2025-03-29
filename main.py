@@ -8,7 +8,12 @@ from tkinter import Listbox
 from tkinter import Entry
 from threading import Thread
 
-from Translatorcode import Trans
+from tools.Translatorcode import Trans
+
+import datetime
+import webbrowser
+from tkinter import messagebox
+from time import sleep
 
 
 if darkdetect.isDark() == True:
@@ -25,6 +30,15 @@ root.geometry("1000x650")
 
 nt = ttk.Notebook(root)
 nt.pack(fill="both",expand=True)
+
+#主页
+p0 = ttk.Frame()
+nt.add(p0,text="主页")
+
+title = ttk.Label(p0,text="你好\n欢迎使用\n🛠功能建设中👈🤓👍",font=refont(30))
+title.pack()
+title = ttk.Label(p0,text="欢迎使用",font=refont(25))
+
 
 #翻译器页面小组件
 p1 = ttk.Frame()
@@ -91,8 +105,14 @@ text.pack(side=TOP,anchor="w")
 fileframe = ttk.Frame(tools,)
 fileframe.pack(side=TOP,pady=10,anchor='w')
 
-input_buttun = ttk.Button(fileframe,bootstyle="info-outline",width=7,text="选择文件",command=lambda:joincache_tr.start())
+input_buttun = ttk.Button(fileframe,bootstyle="info-outline",width=7,text="选择文件",command=lambda:jointask())
 input_buttun.pack(side=LEFT,padx=2)
+def jointask():
+    input_buttun.config(state="disabled")
+    def completetask():
+        input_buttun.config(state="normal")
+    thread = Thread(target=lambda: (mian_code.joincache(), completetask()))
+    thread.start()
 
 del_buttun = ttk.Button(fileframe,bootstyle="danger-outline",width=7,text="删除文件",command=lambda:mian_code.delfile())
 del_buttun.pack(side=LEFT,padx=2)
@@ -109,20 +129,39 @@ def setting():
     window_set.title("设置")
     window_set.geometry("300x500")
 
-    text = ttk.Label(window_set,text="使用翻译库:")
+    bgcanvas = ttk.Canvas(window_set)
+    scroll = ttk.Scrollbar(window_set,orient="vertical",command=bgcanvas.yview)
+    bgcanvas.configure(yscrollcommand=scroll.set)
+    scroll.pack(side="right",fill="y")
+    bgcanvas.pack(side="left",fill="both",expand=True)
+
+    main_frame = ttk.Frame(bgcanvas)
+    bgcanvas.create_window((0,0),window=main_frame,anchor="nw")
+    def update_scrollregion(event):
+        bgcanvas.configure(scrollregion=bgcanvas.bbox("all"))
+    main_frame.bind("<Configure>",update_scrollregion)
+
+    def _on_mousewheel(event):
+        if event.delta:
+            bgcanvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        else:
+            pass
+    bgcanvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+    text = ttk.Label(main_frame,text="使用翻译库:")
     text.pack(side="top",anchor="w",padx=5)
-    combobox_ta = ttk.Combobox(window_set,values=["translators(联网)","argostranslate(本地模型)"],state="readonly")
+    combobox_ta = ttk.Combobox(main_frame,values=["translators(联网)","argostranslate(本地模型)"],state="readonly")
     combobox_ta.current(0)
     combobox_ta.pack(side=TOP,anchor="w",padx=5)
 
     #translators
-    text = ttk.Label(window_set,text="translators库相关:")
+    text = ttk.Label(main_frame,text="translators库相关:")
     text.pack(side="top",anchor="w",padx=5)
-    trframe = ttk.Frame(window_set)
+    trframe = ttk.Frame(main_frame)
     trframe.pack(side="top",anchor="w",padx=10)
 
     ###
-    text = ttk.Label(trframe,text="md给我气傻了暂时不写")
+    text = ttk.Label(trframe,text="md给我气傻了暂时不写",foreground="red")
     text.pack(side="top",anchor="w",padx=5)
     ###
 
@@ -157,22 +196,28 @@ def setting():
     text.pack(side="top",anchor="w",padx=5)
 
     #argostranslate
-    text = ttk.Label(window_set,text="argostranslate库相关:")
+    text = ttk.Label(main_frame,text="argostranslate库相关:")
     text.pack(side="top",anchor="w",padx=5)
-    argframe = ttk.Frame(window_set)
+    argframe = ttk.Frame(main_frame)
     argframe.pack(side="top",anchor="w",padx=5)
 
     
-
-
 setbuttun = ttk.Button(tools,bootstyle="info-outline",width=7,text="设置",command=setting)
 setbuttun.pack(side=TOP,pady=10,anchor='w')
-
-
-
 
 
 #函数/主程序
 mian_code = Trans(mes=logs_text)
 joincache_tr = Thread(target=mian_code.joincache)
+#小彩蛋~
+
+if datetime.datetime.now().month == 4 and datetime.datetime.now().day == 1:
+    root.withdraw()
+    if messagebox.askyesno("Minecraft Tools","程序出了些问题,但可以继续启动"):
+        webbrowser.open("https://www.bilibili.com/video/BV1GJ411x7h7")
+        messagebox.showerror("你被骗了","今天是愚人节哦🤣~")
+    else:
+        sleep(10)
+        messagebox.showwarning("Minecraft Tools","不是哥们，还在等呢，看日期吧bro")
+    root.deiconify()
 root.mainloop()
