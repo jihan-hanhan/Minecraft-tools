@@ -5,11 +5,13 @@ from tkinter import filedialog
 from datetime import datetime
 from tkinter import END
 from tkinter import messagebox
+os.environ["ARGOS_PACKAGES_DIR"]=str(os.path.join("./cache/argos_modelpack"))
 import argostranslate.package
 import argostranslate.translate
 import json
 from threading import Thread
 from threading import Lock
+from time import time
 
 #import translators as ts
 
@@ -40,15 +42,21 @@ minecraft_lang_map = {
     "fi": ["fi_fi.json"],
     "da": ["da_dk.json"]
 }
+encoding = "utf-8"
+
+if not os.path.exists(os.environ["ARGOS_PACKAGES_DIR"]):
+    os.makedirs(os.environ["ARGOS_PACKAGES_DIR"])
+
 class Trans():
-    def __init__(self,mes):
+    def __init__(self,mes,settings):
         self.filepath=[]
         self.filelist=[]
         self.mes = mes
-        self.rmcache()
+        if settings["Tr:rmcache"]:
+            self.rmcache()
         self.det_models_dir()
         self.mk_outputsdir()
-        argostranslate.package.update_package_index()
+        self.argostranslate_check()
         pass
 
     def cutin(self,str,kind=None,):
@@ -58,8 +66,10 @@ class Trans():
         self.mes.insert(END,f"[{timenow}]:")
         if kind == None:
             self.mes.insert(END,str)
+            self.mes.see(END)
         elif kind == 1:
             self.mes.insert(END,str,"warn")
+            self.mes.see(END)
         self.mes.text.configure(state='disabled')
 
     def rmcache(self):
@@ -136,15 +146,14 @@ class Trans():
                 return folder_name[:-len(suffix)]
         return folder_name
     
-    def trans_ts(self,dic,forml,tol,trantor): #在线版
-        traned_dic = dic
-        for i1,i2 in dic.items():
-            pass
-    
-    def trans_ts_retdic(self,text_L,fromlang,tolang,trantor):
-        traned_dic = {}
-        for dic in text_L:
-            pass
+    def argostranslate_check(self):
+        def check():
+            print("st")
+            argostranslate.package.update_package_index()
+            print("dn")
+        c = Thread(target=check())
+        c.start()
+        print("!")
     
     def trans_local_detcet_installedpackage(self,fromlang,tolang):
         installed_package = argostranslate.package.get_installed_packages()
@@ -155,7 +164,7 @@ class Trans():
     
     def trans_local_installpackages(self,fromlang:str,tolang:str):
         try:
-            self.cutin(f"尝试安装{fromlang}-{tolang}\n")
+            self.cutin(f"尝试安装{fromlang}-{tolang} 请耐心等待\n")
             available_packages = argostranslate.package.get_available_packages()
             install = next(
                 filter(
@@ -171,16 +180,19 @@ class Trans():
             self.cutin("包下载时发生错误,请确认网络连接,或使用VPN")
 
 
-    def trans_local(self,text,fromlang,tolang,count=4):
-        #检测部分
+    def trans_local_check(self,fromlang,tolang):
+        
         if not self.trans_local_detcet_installedpackage(fromlang,tolang):
-            if messagebox.askyesno("MT",f"未发现{fromlang}-{tolang}语言包，确定安装吗?") == "yes":
+            if messagebox.askyesno("MT",f"未发现{fromlang}-{tolang}语言包，确定安装吗?") is True:
+                self.cutin("正在安装指定语言包,请耐心等待\n")
                 self.trans_local_installpackages(fromlang,tolang)
+                self.cutin("安装完成!\n")
+                return True
             else:
                 self.cutin("未能满足翻译条件\n")
-                return
-        #翻译部分
-        return argostranslate.translate(text,fromlang,tolang)
+                return False
+        return True
+
         """暂时放弃部分
         if type(text) is str:
             return argostranslate.translate.translate(text,fromlang,tolang)
@@ -202,7 +214,13 @@ class Trans():
         if translator == "local":
             if kind == "only":
                 path = filedialog.askdirectory(title="选择文件夹",initialdir="./cache/translator")
+                if not self.trans_local_check(fromlang,tolang):
+                    print(11111111111111111)
+                    return
                 if path.endswith("_jar"):
+
+                    t1 = time()
+
                     self.cutin(f"选择 {path} \n")
                     #文件夹操作
                     path2 = path + "/assets"
@@ -222,7 +240,7 @@ class Trans():
                         return
                     ##翻译
                     for i in paths:
-                        with open(i,"r") as f:
+                        with open(i,"r",encoding=encoding) as f:
                             data = json.load(f)
                         sdata = self.spdic(data,count)
                         data = {}
@@ -231,7 +249,7 @@ class Trans():
                         def work_translate(dict1):
                             cache = {}
                             for key in dict1:
-                                v = self.trans_local(dict1[key],fromlang,tolang,count)
+                                v = argostranslate.translate.translate(dict1[key],fromlang,tolang)
                                 self.cutin(f"{dict1[key]}-->{v}\n")
                                 cache[key] = v
                             with lock:
@@ -246,9 +264,13 @@ class Trans():
                         for t in threads:
                             t.join()
                         #写入
-                        with open(i,"w") as f:
-                            json.dump(data,f)
                         self.cutin("将翻译语言文件写入中\n")
+                        for j in minecraft_lang_map[tolang]:
+                            i = path2 + "/" + j
+                            with open(i,"w",encoding=encoding) as f:
+                                print(data)
+                                json.dump(data,f,ensure_ascii=False)
+                    t2 = time()
                     ##输出
                     filename = self.clean_folder_name(os.path.basename(path))
                     filedir = filedialog.asksaveasfilename(title="保存",initialdir="./cache/outputs",
@@ -256,7 +278,17 @@ class Trans():
                     if not filedir:
                         self.cutin("取消保存\n")
                         return
-                    self.cutin(f"完成{path}模组翻译")
+                    print(path)
+                    with zf.ZipFile(filedir+filename,"w") as jar:
+                        for root , dir , lists in os.walk(path):
+                            for j in lists:
+                                file_path=os.path.join(root,j)
+                                arcname = os.path.relpath(file_path,start=path)
+                                jar.write(file_path,arcname)
+                    
+                    print("done!")
+                    self.cutin(f"完成{path}模组翻译,耗时约{int(t2-t1)}秒")
+                    
 
 
         

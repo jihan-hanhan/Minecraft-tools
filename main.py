@@ -8,6 +8,8 @@ from tkinter import Listbox
 from tkinter import Entry
 from threading import Thread
 from plyer import notification
+import json
+import os
 
 from tools.Translatorcode import Trans
 
@@ -16,14 +18,27 @@ import webbrowser
 from tkinter import messagebox
 from time import sleep
 
+from time import time
 
-if darkdetect.isDark() == True:
+print(time())
+
+#设置
+settings = {}
+if not os.path.exists("./settings.json"):
+    with open("settings.json","w",encoding="utf-8") as j:
+        json.dump({"theme":"none","font":"Microsoft YaHei","april_fools":False,"Tr:rmcache":True,"Tr:count":4,"Tr:fromlang":"en","Tr:tolang":"zh"},j,indent=4)
+with open("settings.json","r",encoding="utf-8") as r:
+    settings = json.load(r)
+
+if darkdetect.isDark() == True and settings["theme"] == "none":
     kind = "darkly"
-else:
+elif settings["theme"] == "none":
     kind = "litera"
+else:
+    kind = settings["theme"]
 
 def refont(side):
-    returnfont = Font(family="Microsoft YaHei",size=side)
+    returnfont = Font(family=settings["font"],size=side)
     return returnfont
 
 root = ttk.Window(themename=kind,title="Minecraft tools")
@@ -40,6 +55,7 @@ title = ttk.Label(p0,text="你好\n欢迎使用\n🛠功能建设中👈🤓👍
 title.pack()
 title = ttk.Label(p0,text="欢迎使用",font=refont(25))
 
+print(time())
 
 #翻译器页面小组件
 p1 = ttk.Frame()
@@ -78,14 +94,15 @@ def translate_only():
     startbuttun1.config(state="disabled")
     def completetask():
         startbuttun1.config(state="normal")
-    thread = Thread(target= lambda:(mian_code.translate(fromlang=fromlanguage,tolang=tolanguage,count=count,translator=translator,kind="only"), completetask()))
+    thread = Thread(target= lambda:(mian_code.translate(fromlang=settings["Tr:fromlang"],tolang=settings["Tr:tolang"],count=settings["Tr:count"],translator="local",kind="only"), completetask()))
     thread.start()
 
 startbuttun2 = ttk.Button(start_frame,bootstyle="info-outline",width=7,text="翻译多个")
+startbuttun2.config(state="disabled")
 startbuttun2.pack(side=LEFT,padx=2)
 
 
-
+"""
 ##output框架
 text = ttk.Label(tools,text="————输出————",foreground="gray")
 text.pack(side=TOP,anchor="w")
@@ -102,7 +119,7 @@ opbuttun2.pack(side=LEFT,padx=2)
 
 opbuttun3 = ttk.Button(output_frame,bootstyle="success-outline",width=7,text="材质包")
 opbuttun3.pack(side=LEFT,padx=2)
-
+"""
 #文件操作
 text = ttk.Label(tools,text="————文件————",foreground="gray")
 text.pack(side=TOP,anchor="w")
@@ -126,12 +143,7 @@ del_buttun.pack(side=LEFT,padx=2)
 text = ttk.Label(tools,text="————设置————",foreground="gray")
 text.pack(side=TOP,anchor="w")
 
-fromlanguage = "en"
-tolanguage = "zh"
-count = 4
-translator = "local"
-
-def setting():
+def Tr_setting():
     window_set = ttk.Toplevel(root)
     window_set.title("设置")
     window_set.geometry("300x500")
@@ -170,21 +182,21 @@ def setting():
     e1 = ttk.StringVar()
     entry1 = Entry(main_frame,width=10,textvariable=e1)
     entry1.pack(side="top",anchor="w",padx=5)
-    e1.set(fromlanguage)
+    e1.set(settings["Tr:fromlang"])
 
     text = ttk.Label(main_frame,text="输出语言")
     text.pack(side="top",anchor="w",padx=5)
     e2 = ttk.StringVar()
     entry2 = Entry(main_frame,width=10,textvariable=e2)
     entry2.pack(side="top",anchor="w",padx=5)
-    e2.set(tolanguage)
+    e2.set(settings["Tr:tolang"])
 
     text = ttk.Label(main_frame,text="最大线程数")
     text.pack(side="top",anchor="w",padx=5)
     e3 = ttk.StringVar()
     entry3 = Entry(main_frame,width=10,textvariable=e3)
     entry3.pack(side="top",anchor="w",padx=5)
-    e3.set(count)
+    e3.set(settings["Tr:count"])
 
     #translators
     text = ttk.Label(main_frame,text="translators库相关:",font=refont(15))
@@ -220,13 +232,20 @@ def setting():
     argframe.pack(side="top",anchor="w",padx=5)
 
     
-setbuttun = ttk.Button(tools,bootstyle="info-outline",width=7,text="设置",command=setting)
+setbuttun = ttk.Button(tools,bootstyle="info-outline",width=7,text="设置",command=Tr_setting)
 setbuttun.pack(side=TOP,pady=10,anchor='w')
+
+print(time())
 
 
 #函数/主程序
-mian_code = Trans(mes=logs_text)
+Tr_set = {}
+Tr_set["Tr:rmcache"]=settings["Tr:rmcache"]
+
+mian_code = Trans(mes=logs_text,settings=Tr_set)
 joincache_tr = Thread(target=mian_code.joincache)
+
+print(time())
 
 #小彩蛋~
 
@@ -239,4 +258,10 @@ if datetime.datetime.now().month == 4 and datetime.datetime.now().day == 1:
         sleep(10)
         messagebox.showwarning("Minecraft Tools","不是哥们，还在等呢，看日期吧bro")
     root.deiconify()
+
+print(time())
+
 root.mainloop()
+
+with open("settings.json","w",encoding="utf-8") as j:
+    json.dump(settings,j,indent=4)
